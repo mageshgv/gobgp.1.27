@@ -16,6 +16,7 @@
 package server
 
 import (
+	"encoding/binary"
 	"fmt"
 	"net"
 	"strconv"
@@ -495,6 +496,22 @@ func (z *zebraClient) SendPaths(paths []*table.Path, vrfs map[string]uint16) {
 		PathList: paths,
 		Vrf:      vrfs,
 	}
+}
+
+func (z *zebraClient) SendVrfRegister(vrfId uint32) {
+	buf := make([]byte, 4)
+	binary.BigEndian.PutUint32(buf, vrfId)
+	body := &zebra.UnknownBody{}
+	body.Data = buf
+	z.client.SendCommand(zebra.VRF_REGISTER, zebra.VRF_DEFAULT, body)
+}
+
+func (z *zebraClient) SendVrfUnregister(vrfId uint32) {
+	buf := make([]byte, 4)
+	binary.BigEndian.PutUint32(buf, vrfId)
+	body := &zebra.UnknownBody{}
+	body.Data = buf
+	z.client.SendCommand(zebra.VRF_UNREGISTER, zebra.VRF_DEFAULT, body)
 }
 
 func (z *zebraClient) reconnect() {

@@ -1708,6 +1708,9 @@ func (s *BgpServer) AddVrf(name string, id uint32, rd bgp.RouteDistinguisherInte
 			s.propagateUpdate(nil, pathList)
 		}
 		tbl, _ := s.globalRib.FetchExistingVrf(name)
+		if s.zclient != nil {
+			s.zclient.SendVrfRegister(id)
+		}
 		if s.zclient != nil && tbl != nil {
 			for _, dst := range tbl.GetDestinations() {
 				paths := dst.GetAllKnownPathList()
@@ -1730,6 +1733,9 @@ func (s *BgpServer) DeleteVrf(name string) error {
 			}
 		}
 		tbl, id := s.globalRib.FetchExistingVrf(name)
+		if s.zclient != nil {
+			s.zclient.SendVrfUnregister(id)
+		}
 		if s.zclient != nil && tbl != nil {
 			for _, dst := range tbl.GetDestinations() {
 				paths := dst.GetAllKnownPathList()
