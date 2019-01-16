@@ -32,6 +32,9 @@ import (
 	"github.com/osrg/gobgp/table"
 )
 
+// AddPathForAllRoutes is flag for enabling AddPath for all routes on sending routes to ribd.
+var AddPathForAllRoutes = false
+
 type TCPListener struct {
 	l  *net.TCPListener
 	ch chan struct{}

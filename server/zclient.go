@@ -626,6 +626,9 @@ func (z *zebraClient) loop() {
 					}
 				} else {
 					for _, path := range msg.PathList {
+						if AddPathForAllRoutes {
+							continue
+						}
 						if NlriPrefix(path.GetNlri().String()) == "0.0.0.0/0" {
 							continue
 						}
@@ -669,7 +672,7 @@ func (z *zebraClient) loop() {
 					}
 				}
 				for _, path := range msg.PathList {
-					if NlriPrefix(path.GetNlri().String()) != "0.0.0.0/0" {
+					if !AddPathForAllRoutes && NlriPrefix(path.GetNlri().String()) != "0.0.0.0/0" {
 						continue
 					}
 					if path.IsLocal() {

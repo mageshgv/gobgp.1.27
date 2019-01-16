@@ -26,7 +26,7 @@ import (
 	"runtime"
 	"syscall"
 
-	"github.com/jessevdk/go-flags"
+	flags "github.com/jessevdk/go-flags"
 	"github.com/kr/pretty"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
@@ -130,6 +130,9 @@ func main() {
 		}
 		os.Exit(0)
 	}
+
+	// Set add path for all routes flag.
+	server.AddPathForAllRoutes = true
 
 	log.Info("gobgpd started")
 	bgpServer := server.NewBgpServer()
