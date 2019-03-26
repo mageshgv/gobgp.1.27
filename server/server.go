@@ -69,12 +69,17 @@ func NewTCPListener(address string, port uint32, ch chan *net.TCPConn) (*TCPList
 	}
 	// Note: Set TTL=255 for incoming connection listener in order to accept
 	// connection in case for the neighbor has TTL Security settings.
-	if err := SetListenTcpTTLSockopt(l, 255); err != nil {
-		log.WithFields(log.Fields{
-			"Topic": "Peer",
-			"Key":   addr,
-		}).Warnf("cannot set TTL(=%d) for TCPListener: %s", 255, err)
-	}
+
+	// Note: Setting listen socket TTL makes socket close blocking under certain
+	// call sequence. Actually, incoming socket TTL setting is not effective on
+	// Linux platform, we disable this setting for now -- Kunihiro Ishiguro.
+
+	// if err := SetListenTcpTTLSockopt(l, 255); err != nil {
+	// 	log.WithFields(log.Fields{
+	// 		"Topic": "Peer",
+	// 		"Key":   addr,
+	// 	}).Warnf("cannot set TTL(=%d) for TCPListener: %s", 255, err)
+	// }
 
 	closeCh := make(chan struct{})
 	go func() error {
