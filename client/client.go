@@ -30,6 +30,7 @@ import (
 	"github.com/osrg/gobgp/config"
 	"github.com/osrg/gobgp/packet/bgp"
 	"github.com/osrg/gobgp/table"
+	log "github.com/sirupsen/logrus"
 )
 
 type Client struct {
@@ -998,4 +999,9 @@ func (cli *Client) MonitorNeighborState(name string, current bool) (*MonitorNeig
 		return nil, err
 	}
 	return &MonitorNeighborStateClient{stream}, nil
+}
+
+func (cli *Client) SetLogLevel(level log.Level) error {
+	_, err := cli.cli.SetLogLevel(context.Background(), &api.SetLogLevelRequest{Level: uint32(level)})
+	return err
 }
