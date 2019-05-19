@@ -750,6 +750,7 @@ func showNeighborRib(r string, name string, args []string) error {
 	var rib *table.Table
 	switch r {
 	case CMD_GLOBAL:
+		showIdentifier = bgp.BGP_ADD_PATH_SEND
 		rib, err = client.GetRIB(family, filter)
 	case CMD_LOCAL:
 		rib, err = client.GetLocalRIB(name, family, filter)
