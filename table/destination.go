@@ -278,6 +278,13 @@ func (dest *Destination) Calculate(newPath *Path) *Update {
 		p := dest.explicitWithdraw(newPath)
 		if p != nil {
 			if id := p.GetNlri().PathLocalIdentifier(); id != 0 {
+				log.WithFields(log.Fields{
+					"Topic":    "Withdraw PathId",
+					"Key":      p.GetNlri().String(),
+					"WithPath": p,
+					"DelPath":  newPath,
+					"PathId":   id,
+				}).Debug("release localIdMap")
 				dest.localIdMap.Unflag(uint(id))
 			}
 		}
@@ -293,6 +300,12 @@ func (dest *Destination) Calculate(newPath *Path) *Update {
 				dest.localIdMap.Expand()
 				id, _ = dest.localIdMap.FindandSetZeroBit()
 			}
+			log.WithFields(log.Fields{
+				"Topic":   "Add PathId",
+				"Key":     path.GetNlri().String(),
+				"AddPath": path,
+				"PathId":  id,
+			}).Debug("assign localIdMap")
 			path.GetNlri().SetPathLocalIdentifier(uint32(id))
 		}
 	}
