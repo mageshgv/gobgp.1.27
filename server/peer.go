@@ -449,9 +449,26 @@ func (peer *Peer) handleUpdate(e *FsmMsg) ([]*table.Path, []bgp.RouteFamily, *bg
 					continue
 				}
 			}
+
+			// RFC4456 8. Avoiding Routing Information Loops
+			// A router that recognizes the ORIGINATOR_ID attribute SHOULD
+			// ignore a route received with its BGP Identifier as the ORIGINATOR_ID.
+
+			if peer.isIBGPPeer() {
+				if id := path.GetOriginatorID(); peer.fsm.gConf.Config.RouterId == id.String() {
+					log.WithFields(log.Fields{
+						"Topic":        "Peer",
+						"Key":          peer.ID(),
+						"OriginatorID": id,
+						"Data":         path,
+					}).Debug("Originator ID is mine, ignore")
+					continue
+				}
+			}
+
 			paths = append(paths, path)
 		}
-		peer.adjRibIn.Update(e.PathList)
+		peer.adjRibIn.Update(paths)
 		for _, af := range peer.fsm.pConf.AfiSafis {
 			if msg := peer.doPrefixLimit(af.State.Family, &af.PrefixLimit.Config); msg != nil {
 				return nil, nil, msg
