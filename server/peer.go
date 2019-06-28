@@ -427,6 +427,7 @@ func (peer *Peer) handleUpdate(e *FsmMsg) ([]*table.Path, []bgp.RouteFamily, *bg
 	peer.fsm.pConf.Timers.State.UpdateRecvTime = time.Now().Unix()
 	if len(e.PathList) > 0 {
 		paths := make([]*table.Path, 0, len(e.PathList))
+		paths_adjin := make([]*table.Path, 0, len(e.PathList))
 		eor := []bgp.RouteFamily{}
 		for _, path := range e.PathList {
 			if path.IsEOR() {
@@ -437,6 +438,7 @@ func (peer *Peer) handleUpdate(e *FsmMsg) ([]*table.Path, []bgp.RouteFamily, *bg
 					"AddressFamily": family,
 				}).Debug("EOR received")
 				eor = append(eor, family)
+				paths_adjin = append(paths_adjin, path)
 				continue
 			}
 			// RFC4271 9.1.2 Phase 2: Route Selection
@@ -446,12 +448,31 @@ func (peer *Peer) handleUpdate(e *FsmMsg) ([]*table.Path, []bgp.RouteFamily, *bg
 			if aspath := path.GetAsPath(); aspath != nil {
 				if hasOwnASLoop(peer.fsm.peerInfo.LocalAS, int(peer.fsm.pConf.AsPathOptions.Config.AllowOwnAs), aspath) {
 					path.SetAsLooped(true)
+					paths_adjin = append(paths_adjin, path)
 					continue
 				}
 			}
+
+			// RFC4456 8. Avoiding Routing Information Loops
+			// A router that recognizes the ORIGINATOR_ID attribute SHOULD
+			// ignore a route received with its BGP Identifier as the ORIGINATOR_ID.
+
+			if peer.isIBGPPeer() {
+				if id := path.GetOriginatorID(); peer.fsm.gConf.Config.RouterId == id.String() {
+					log.WithFields(log.Fields{
+						"Topic":        "Peer",
+						"Key":          peer.ID(),
+						"OriginatorID": id,
+						"Data":         path,
+					}).Debug("Originator ID is mine, ignore")
+					continue
+				}
+			}
+
 			paths = append(paths, path)
+			paths_adjin = append(paths_adjin, path)
 		}
-		peer.adjRibIn.Update(e.PathList)
+		peer.adjRibIn.Update(paths_adjin)
 		for _, af := range peer.fsm.pConf.AfiSafis {
 			if msg := peer.doPrefixLimit(af.State.Family, &af.PrefixLimit.Config); msg != nil {
 				return nil, nil, msg
